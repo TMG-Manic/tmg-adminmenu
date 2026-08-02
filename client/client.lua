@@ -572,6 +572,21 @@ RegisterNetEvent('tmg-admin:client:openMenu', function()
     end)
 end)
 
+RegisterNetEvent('tmg-admin:client:putIntoVehicle', function(netId)
+    local vehicle = NetToVeh(netId)
+    if DoesEntityExist(vehicle) then
+        local ped = PlayerPedId()
+        for seat = -1, GetVehicleMaxNumberOfPassengers(vehicle) - 1 do
+            if IsVehicleSeatFree(vehicle, seat) then
+                TaskWarpPedIntoVehicle(ped, vehicle, seat)
+                TriggerEvent('TMGCore:Notify', Lang:t('success.entered_vehicle'), 'success')
+                return
+            end
+        end
+        TriggerEvent('TMGCore:Notify', Lang:t('error.no_free_seats'), 'error')
+    end
+end)
+
 CreateThread(function()
     while not AdminState.menuBuilt do Wait(100) end
 

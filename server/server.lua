@@ -1,5 +1,4 @@
 local TMGCore = exports['tmg-core']:GetCoreObject()
-local frozen = false
 
 local permissions = {
     ['kill'] = 'admin', ['ban'] = 'admin', ['noclip'] = 'admin', 
@@ -56,15 +55,6 @@ TMGCore.Functions.CreateCallback('tmg-admin:server:getrank', function(source, cb
         cb(false)
     end
 end)
-
--- Functions
-local function tablelength(table)
-    local count = 0
-    for _ in pairs(table) do
-        count = count + 1
-    end
-    return count
-end
 
 --- Executes a permanent, automated exclusion when a Player breaches security protocols.
 --- @param src number The server ID of the unauthorized Player.
@@ -305,7 +295,6 @@ RegisterNetEvent('tmg-admin:server:goto', function(player)
     end
 
     local targetCoords = GetEntityCoords(targetPed)
-    local adminPed = GetPlayerPed(src)
 
     local targetBucket = GetPlayerRoutingBucket(targetId)
     if GetPlayerRoutingBucket(src) ~= targetBucket then
@@ -349,28 +338,14 @@ RegisterNetEvent('tmg-admin:server:intovehicle', function(player)
         SetPlayerRoutingBucket(src, targetBucket)
     end
 
-    local seat = -1
-    for i = -1, 14, 1 do 
-        if GetPedInVehicleSeat(vehicle, i) == 0 then
-            seat = i
-            break
-        end
-    end
-
-    if seat ~= -1 then
-        local adminPed = GetPlayerPed(src)
-        SetPedIntoVehicle(adminPed, vehicle, seat)
+    local netId = NetworkGetNetworkIdFromEntity(vehicle)
+    TriggerClientEvent('tmg-admin:client:putIntoVehicle', src, netId)
         
-        print(string.format("^5[TMG Admin]^7 Logistics: %s infiltrated vehicle of %s (Seat: %s)", 
-            adminName, targetName, seat))
-            
-        TriggerEvent('tmg-log:server:CreateLog', 'adminmenu', 'Infiltration (IntoVehicle)', 'blue', 
-            string.format('%s entered vehicle of %s in seat %s', adminName, targetName, seat), true)
-            
-        TriggerClientEvent('TMGCore:Notify', src, Lang:t('sucess.entered_vehicle'), 'success')
-    else
-        TriggerClientEvent('TMGCore:Notify', src, Lang:t('error.no_free_seats'), 'danger')
-    end
+    print(string.format("^5[TMG Admin]^7 Logistics: %s infiltrated vehicle of %s", 
+        adminName, targetName))
+        
+    TriggerEvent('tmg-log:server:CreateLog', 'adminmenu', 'Infiltration (IntoVehicle)', 'blue', 
+        string.format('%s entered vehicle of %s', adminName, targetName), true)
 end)
 
 
@@ -477,7 +452,7 @@ RegisterNetEvent('tmg-admin:server:setPermissions', function(targetId, group)
         return print("^1[TMG Error]^7 Invalid permission payload received from Player " .. src)
     end
 
-    local targetId = tonumber(targetId)
+    targetId = tonumber(targetId)
     local TargetPlayer = TMGCore.Functions.GetPlayer(targetId)
     if not TargetPlayer then 
         return TriggerClientEvent('TMGCore:Notify', src, "Mainframe: Target Player is no longer active.", "error")
